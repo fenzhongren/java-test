@@ -34,7 +34,7 @@ public class SimpleGui3C implements ActionListener {
 		button.addActionListener(this);
 		
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setSize(300,300);
+		frame.setSize(300,400);
 		frame.setVisible(true);
 	}
 
