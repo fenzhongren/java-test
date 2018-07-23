@@ -1,16 +1,15 @@
 package com.zejunx.swing;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Font;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-import javax.sound.midi.InvalidMidiDataException;
 import javax.sound.midi.MidiEvent;
 import javax.sound.midi.MidiSystem;
-import javax.sound.midi.MidiUnavailableException;
 import javax.sound.midi.Sequence;
 import javax.sound.midi.Sequencer;
 import javax.sound.midi.ShortMessage;
@@ -34,10 +33,9 @@ public class BeatBox {
 	
 	private static final int[] instrumentNumbers = {35, 42, 46, 38, 49, 39, 
 			50, 60, 70, 72, 64, 56, 58, 47, 67, 63};
-	
-	private static final String[] buttonNames = {"Start", "Stop", "Tempo Up", "Tempo Down"};
 
 	private JFrame theFrame;
+	private JPanel backgroundPanel;
 	private ArrayList<JCheckBox> checkBoxList = new ArrayList<>();
 	private Sequencer sequencer;
 	private Sequence seq;
@@ -45,34 +43,90 @@ public class BeatBox {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		BeatBox box = new BeatBox();
-		box.buildGui();
+		box.go();
 	}
 	
-	public void buildGui() {
-		theFrame = new JFrame("Cyber BeatBox");
-		theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		JPanel backgroundPanel = new JPanel(new BorderLayout());
-		backgroundPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));		
+	public void go() {
+		setUpDialogGui();
+		setUpMidi();
+		softwareStart();
+	}
+	
+	private void setUpDialogGui() {
+		initFrame();
 		
+		initBackgroundPanel();
+		
+		Box buttonBox = initAllbuttonsInBox();
+		add2background(BorderLayout.EAST, buttonBox);
+		
+		Box instrumentBox = initAllInstrumentsInBox();
+		add2background(BorderLayout.WEST, instrumentBox);
+		
+		JPanel mainPanel = initAllCheckBoxesInPanel();
+		add2background(BorderLayout.CENTER, mainPanel);
+	}
+	
+	private void softwareStart() {
+		theFrame.getContentPane().add(BorderLayout.CENTER, backgroundPanel);
+		theFrame.setBounds(400, 200, 300, 300);
+		theFrame.pack();
+		theFrame.setVisible(true);
+	}
+	
+	private void initFrame() {
+		theFrame = new JFrame("Cyber BeatBox");
+		theFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);	
+	}
+	
+	private void initBackgroundPanel() {
+		backgroundPanel = new JPanel(new BorderLayout());
+		backgroundPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));		
+	}
+	
+	private Box initAllbuttonsInBox() {
 		Box buttonBox = new Box(BoxLayout.Y_AXIS);
+		
 		JButton startButton = buildButton("Start", new StartButtonListener());
 		buttonBox.add(startButton);
+		
 		JButton stopButton = buildButton("Stop", new StopButtonListener());
 		buttonBox.add(stopButton);
+		
 		JButton tempoUpButton = buildButton("Tempo Up", new TempoUpButtonListener());
 		buttonBox.add(tempoUpButton);
+		
 		JButton tempoDownButton = buildButton("Tempo Down", new TempoDownButtonListener());
 		buttonBox.add(tempoDownButton);
-		backgroundPanel.add(BorderLayout.EAST, buttonBox);
 		
+		JButton ClearAllButton = buildButton("Clear All", new ClearAllButtonListener());
+		buttonBox.add(ClearAllButton);
+		
+		return buttonBox;
+	}
+	
+	private void add2background(String position, Component comp) {
+		backgroundPanel.add(position, comp);
+	}
+	
+	private JButton buildButton(String aName, ActionListener anActionListener) {
+		JButton button = new JButton(aName);
+		button.setFont(new Font("TimesRoman", Font.BOLD, 18));
+		button.addActionListener(anActionListener);
+		return button;
+	}
+	
+	private Box initAllInstrumentsInBox() {
 		Box instrumentBox = new Box(BoxLayout.Y_AXIS);
 		for(String name : instrumentNames) {
 			JLabel label = new JLabel(name);
 			label.setFont(new Font("TimesRoman", Font.BOLD, 18));
 			instrumentBox.add(label);
 		}
-		backgroundPanel.add(BorderLayout.WEST, instrumentBox);
-		
+		return instrumentBox;
+	}
+	
+	private JPanel initAllCheckBoxesInPanel() {
 		GridLayout grid = new GridLayout(16, 16);
 		grid.setHgap(4);
 		grid.setVgap(1);
@@ -85,20 +139,7 @@ public class BeatBox {
 				mainPanel.add(box);
 			}
 		}
-		backgroundPanel.add(BorderLayout.CENTER, mainPanel);
-		
-		setUpMidi();
-		theFrame.getContentPane().add(BorderLayout.CENTER, backgroundPanel);
-		theFrame.setBounds(400, 200, 300, 300);
-		theFrame.pack();
-		theFrame.setVisible(true);
-	}
-	
-	private JButton buildButton(String aName, ActionListener anActionListener) {
-		JButton button = new JButton(aName);
-		button.setFont(new Font("TimesRoman", Font.BOLD, 18));
-		button.addActionListener(anActionListener);
-		return button;
+		return mainPanel;
 	}
 	
 	private void setUpMidi(){
@@ -153,6 +194,18 @@ public class BeatBox {
 		
 	}
 	
+	class ClearAllButtonListener implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent arg0) {
+			// TODO Auto-generated method stub
+			for(JCheckBox box : checkBoxList) {
+				box.setSelected(false);
+			}
+		}
+		
+	}
+	
 	private void buildTrackAndStart() {
 		
 		int[] tickArray = null;
@@ -175,7 +228,7 @@ public class BeatBox {
 		track.add(makeEvent(192, 9, 1, 0, 15));
 		try {
 			sequencer.setSequence(seq);
-			sequencer.setLoopCount(sequencer.LOOP_CONTINUOUSLY);
+			sequencer.setLoopCount(Sequencer.LOOP_CONTINUOUSLY);
 			sequencer.setTempoInBPM(120);
 			sequencer.start();
 		} catch(Exception ex) {
